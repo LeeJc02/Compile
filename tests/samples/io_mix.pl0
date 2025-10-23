@@ -1,0 +1,6 @@
+var value;
+begin
+  read(value);
+  write(value);
+  writeln(0);
+end.

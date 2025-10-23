@@ -1,0 +1,16 @@
+/Users/lee/Documents/Compile/build/CMakeFiles/pl0.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/pl0-cli.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/pl0c.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/pl0run.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/pl0dis.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/pl0-gui.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/test.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/edit_cache.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/rebuild_cache.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/pl0-gui_autogen_timestamp_deps.dir
+/Users/lee/Documents/Compile/build/CMakeFiles/pl0-gui_autogen.dir
+/Users/lee/Documents/Compile/build/tests/CMakeFiles/pl0_test_support.dir
+/Users/lee/Documents/Compile/build/tests/CMakeFiles/pl0_tests.dir
+/Users/lee/Documents/Compile/build/tests/CMakeFiles/test.dir
+/Users/lee/Documents/Compile/build/tests/CMakeFiles/edit_cache.dir
+/Users/lee/Documents/Compile/build/tests/CMakeFiles/rebuild_cache.dir

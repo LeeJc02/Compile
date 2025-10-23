@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/lee/Documents/Compile/build/cmake_install.cmake",
+		"/Users/lee/Documents/Compile/build/tests/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

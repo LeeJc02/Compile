@@ -1,0 +1,1 @@
+/usr/bin/c++ -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names -fsanitize=address -fsanitize=undefined CMakeFiles/pl0dis.dir/tools/pl0dis.cpp.o -o pl0dis  libpl0.a
