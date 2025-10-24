@@ -1,3 +1,5 @@
+// 文件: Parser.cpp
+// 功能: 实现递归下降语法分析流程
 #include "pl0/Parser.hpp"
 
 #include <algorithm>
@@ -12,6 +14,7 @@ namespace pl0 {
 
 namespace {
 
+// 函数: 构造语句节点包装器
 StmtPtr make_statement(SourceRange range, auto value) {
   auto stmt = std::make_unique<Statement>();
   stmt->range = range;
@@ -19,6 +22,7 @@ StmtPtr make_statement(SourceRange range, auto value) {
   return stmt;
 }
 
+// 函数: 构造表达式节点包装器
 ExprPtr make_expression(SourceRange range, auto value) {
   auto expr = std::make_unique<Expression>();
   expr->range = range;
@@ -28,9 +32,11 @@ ExprPtr make_expression(SourceRange range, auto value) {
 
 }  // namespace
 
+// 构造: 绑定词法器与诊断器
 Parser::Parser(Lexer& lexer, DiagnosticSink& diagnostics)
     : lexer_(lexer), diagnostics_(diagnostics) {}
 
+// 函数: 解析整個程序
 std::unique_ptr<Program> Parser::parse_program() {
   auto program = std::make_unique<Program>();
   auto block = parse_block();
@@ -43,10 +49,12 @@ std::unique_ptr<Program> Parser::parse_program() {
   return program;
 }
 
+// 函数: 预读指定偏移 Token
 const Token& Parser::peek(std::size_t lookahead) {
   return lexer_.peek(lookahead);
 }
 
+// 函数: 若匹配则消费 Token
 bool Parser::match(TokenKind kind) {
   if (peek(0).kind == kind) {
     lexer_.next();
@@ -56,6 +64,7 @@ bool Parser::match(TokenKind kind) {
   return false;
 }
 
+// 函数: 断言下一个 Token 类型
 Token Parser::expect(TokenKind kind, DiagnosticCode code,
                      std::string_view message) {
   const Token& token = peek(0);
@@ -69,6 +78,7 @@ Token Parser::expect(TokenKind kind, DiagnosticCode code,
   return lexer_.next();
 }
 
+// 函数: Panic 模式同步
 void Parser::synchronize(const std::vector<TokenKind>& sync_tokens) {
   if (!panic_mode_) {
     return;
@@ -83,6 +93,7 @@ void Parser::synchronize(const std::vector<TokenKind>& sync_tokens) {
   panic_mode_ = false;
 }
 
+// 函数: 解析 block, 依次处理声明与语句
 std::unique_ptr<Block> Parser::parse_block() {
   auto block = std::make_unique<Block>();
   parse_const_declarations(*block);
@@ -95,6 +106,7 @@ std::unique_ptr<Block> Parser::parse_block() {
   return block;
 }
 
+// 函数: 解析 const 声明列表
 void Parser::parse_const_declarations(Block& block) {
   if (!match(TokenKind::Const)) {
     return;
@@ -132,6 +144,7 @@ void Parser::parse_const_declarations(Block& block) {
          "expected ';' after const declarations");
 }
 
+// 函数: 解析 var 声明列表
 void Parser::parse_var_declarations(Block& block) {
   if (!match(TokenKind::Var)) {
     return;
@@ -167,6 +180,7 @@ void Parser::parse_var_declarations(Block& block) {
          "expected ';' after var declarations");
 }
 
+// 函数: 解析 procedure 声明
 void Parser::parse_procedure_declarations(Block& block) {
   while (match(TokenKind::Procedure)) {
     auto proc_token = expect(TokenKind::Identifier,
@@ -189,6 +203,7 @@ void Parser::parse_procedure_declarations(Block& block) {
   }
 }
 
+// 函数: 根据首词选择语句解析路径
 StmtPtr Parser::parse_statement() {
   const auto token = peek(0);
   switch (token.kind) {
@@ -215,6 +230,7 @@ StmtPtr Parser::parse_statement() {
   }
 }
 
+// 函数: 解析赋值语句, 支持复合操作
 StmtPtr Parser::parse_assignment() {
   auto identifier = expect(TokenKind::Identifier,
                            DiagnosticCode::ExpectedIdentifier,
@@ -223,26 +239,96 @@ StmtPtr Parser::parse_assignment() {
   stmt.target = identifier.lexeme;
   stmt.index = nullptr;
   SourceLoc begin = identifier.range.begin;
+  ExprPtr index_expr = nullptr;
   if (match(TokenKind::LBracket)) {
-    auto index_expr = parse_expression();
+    index_expr = parse_expression();
     if (!index_expr) {
       index_expr = make_expression(identifier.range, NumberLiteral{0});
     }
-    stmt.index = std::move(index_expr);
     expect(TokenKind::RBracket, DiagnosticCode::ExpectedSymbol,
            "expected ']' after subscript");
   }
-  expect(TokenKind::Assign, DiagnosticCode::ExpectedSymbol,
-         "expected ':=' in assignment");
-  auto value_expr = parse_expression();
+  Token op_token = peek(0);
+  auto make_unit_literal = [&](std::int64_t value) {
+    return make_expression(op_token.range, NumberLiteral{value});
+  };
+
+  auto make_error_fallback = [&]() {
+    diagnostics_.report({DiagnosticLevel::Error,
+                         DiagnosticCode::ExpectedSymbol,
+                         "expected assignment operator", op_token.range});
+    return make_expression(identifier.range, NumberLiteral{0});
+  };
+
+  ExprPtr value_expr;
+  switch (op_token.kind) {
+    case TokenKind::Assign: {
+      lexer_.next();
+      value_expr = parse_expression();
+      stmt.op = AssignmentOperator::Assign;
+      break;
+    }
+    case TokenKind::PlusEqual: {
+      lexer_.next();
+      value_expr = parse_expression();
+      stmt.op = AssignmentOperator::AddAssign;
+      break;
+    }
+    case TokenKind::MinusEqual: {
+      lexer_.next();
+      value_expr = parse_expression();
+      stmt.op = AssignmentOperator::SubAssign;
+      break;
+    }
+    case TokenKind::StarEqual: {
+      lexer_.next();
+      value_expr = parse_expression();
+      stmt.op = AssignmentOperator::MulAssign;
+      break;
+    }
+    case TokenKind::SlashEqual: {
+      lexer_.next();
+      value_expr = parse_expression();
+      stmt.op = AssignmentOperator::DivAssign;
+      break;
+    }
+    case TokenKind::PercentEqual: {
+      lexer_.next();
+      value_expr = parse_expression();
+      stmt.op = AssignmentOperator::ModAssign;
+      break;
+    }
+    case TokenKind::PlusPlus: {
+      lexer_.next();
+      value_expr = make_unit_literal(1);
+      stmt.op = AssignmentOperator::AddAssign;
+      break;
+    }
+    case TokenKind::MinusMinus: {
+      lexer_.next();
+      value_expr = make_unit_literal(1);
+      stmt.op = AssignmentOperator::SubAssign;
+      break;
+    }
+    default: {
+      lexer_.next();
+      value_expr = make_error_fallback();
+      stmt.op = AssignmentOperator::Assign;
+      break;
+    }
+  }
+
   if (!value_expr) {
     value_expr = make_expression(identifier.range, NumberLiteral{0});
   }
+  stmt.index = std::move(index_expr);
   stmt.value = std::move(value_expr);
-  SourceRange range{begin, stmt.value->range.end};
+  SourceLoc end = stmt.value ? stmt.value->range.end : op_token.range.end;
+  SourceRange range{begin, end};
   return make_statement(range, std::move(stmt));
 }
 
+// 函数: 解析 call 语句
 StmtPtr Parser::parse_call() {
   auto call_token = expect(TokenKind::Call, DiagnosticCode::ExpectedSymbol,
                            "expected 'call'");
@@ -280,6 +366,7 @@ StmtPtr Parser::parse_call() {
   return make_statement(range, std::move(stmt));
 }
 
+// 函数: 解析 begin...end 语句
 StmtPtr Parser::parse_begin_end() {
   auto begin_token = expect(TokenKind::Begin, DiagnosticCode::ExpectedSymbol,
                             "expected 'begin'");
@@ -299,6 +386,7 @@ StmtPtr Parser::parse_begin_end() {
   return make_statement(range, std::move(statements));
 }
 
+// 函数: 解析 if/then/else 语句
 StmtPtr Parser::parse_if() {
   auto if_token = expect(TokenKind::If, DiagnosticCode::ExpectedSymbol,
                          "expected 'if'");
@@ -331,6 +419,7 @@ StmtPtr Parser::parse_if() {
   return make_statement(range, std::move(stmt));
 }
 
+// 函数: 解析 while 循环
 StmtPtr Parser::parse_while() {
   auto while_token = expect(TokenKind::While, DiagnosticCode::ExpectedSymbol,
                             "expected 'while'");
@@ -351,6 +440,7 @@ StmtPtr Parser::parse_while() {
   return make_statement(range, std::move(stmt));
 }
 
+// 函数: 解析 repeat...until 循环
 StmtPtr Parser::parse_repeat() {
   auto repeat_token = expect(TokenKind::Repeat, DiagnosticCode::ExpectedSymbol,
                              "expected 'repeat'");
@@ -375,6 +465,7 @@ StmtPtr Parser::parse_repeat() {
   return make_statement(range, std::move(stmt));
 }
 
+// 函数: 解析 read 语句
 StmtPtr Parser::parse_read() {
   auto read_token = expect(TokenKind::Read, DiagnosticCode::ExpectedSymbol,
                            "expected 'read'");
@@ -408,6 +499,7 @@ StmtPtr Parser::parse_read() {
   return make_statement(range, std::move(stmt));
 }
 
+// 函数: 解析 write/writeln 语句
 StmtPtr Parser::parse_write(bool newline) {
   auto write_token = expect(newline ? TokenKind::Writeln : TokenKind::Write,
                             DiagnosticCode::ExpectedSymbol,
@@ -449,6 +541,7 @@ StmtPtr Parser::parse_write(bool newline) {
   return make_statement(range, std::move(stmt));
 }
 
+// 函数: 解析逻辑或表达式
 ExprPtr Parser::parse_expression() {
   auto expr = parse_logic_term();
   while (match(TokenKind::Or)) {
@@ -463,6 +556,7 @@ ExprPtr Parser::parse_expression() {
   return expr;
 }
 
+// 函数: 解析逻辑与表达式
 ExprPtr Parser::parse_logic_term() {
   auto expr = parse_logic_factor();
   while (match(TokenKind::And)) {
@@ -477,11 +571,13 @@ ExprPtr Parser::parse_logic_term() {
   return expr;
 }
 
+// 函数: 解析逻辑因子
 ExprPtr Parser::parse_logic_factor() {
   auto expr = parse_relation();
   return expr;
 }
 
+// 函数: 解析比较表达式
 ExprPtr Parser::parse_relation() {
   auto left = parse_term();
   const auto op_token = peek(0);
@@ -523,6 +619,7 @@ ExprPtr Parser::parse_relation() {
   return make_expression(range, std::move(binary));
 }
 
+// 函数: 解析加减层级
 ExprPtr Parser::parse_term() {
   auto expr = parse_factor();
   while (true) {
@@ -547,6 +644,7 @@ ExprPtr Parser::parse_term() {
   return expr;
 }
 
+// 函数: 解析乘除层级
 ExprPtr Parser::parse_factor() {
   const auto token = peek(0);
   if (match(TokenKind::Plus)) {
@@ -611,6 +709,7 @@ ExprPtr Parser::parse_factor() {
   return expr;
 }
 
+// 函数: 解析原子表达式
 ExprPtr Parser::parse_primary() {
   const auto token = peek(0);
   switch (token.kind) {
@@ -688,6 +787,7 @@ ExprPtr Parser::parse_primary() {
   }
 }
 
+// 函数: 解析标识符列表
 std::vector<std::string> Parser::parse_identifier_list() {
   std::vector<std::string> names;
   auto first = expect(TokenKind::Identifier, DiagnosticCode::ExpectedIdentifier,

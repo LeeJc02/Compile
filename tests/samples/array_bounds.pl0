@@ -1,7 +1,6 @@
 var a[3], i;
 begin
-  a[0] := 10;
-  a[1] := 20;
+
   a[2] := 30;
   i := 0;
   while i < 3 do
@@ -10,3 +9,4 @@ begin
     i := i + 1;
   end;
 end.
+

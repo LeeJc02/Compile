@@ -1152,14 +1152,22 @@ CMakeFiles/pl0-gui.dir/gui/MainWindow.cpp.o: \
   /opt/homebrew/opt/qt@5/lib/QtGui.framework/Headers/qguiapplication.h \
   /opt/homebrew/opt/qt@5/lib/QtGui.framework/Headers/qinputmethod.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QCoreApplication \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QDateTime \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdatetime.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QDebug \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdebug.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qtextstream.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qcontiguouscache.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QDir \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdir.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qfileinfo.h \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/QDockWidget \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qdockwidget.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QFile \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/QFileDialog \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qfiledialog.h \
-  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdir.h \
-  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qfileinfo.h \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qdialog.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QFileInfo \
   /opt/homebrew/opt/qt@5/lib/QtGui.framework/Headers/QFontDatabase \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/QGraphicsOpacityEffect \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qgraphicseffect.h \
@@ -1190,7 +1198,6 @@ CMakeFiles/pl0-gui.dir/gui/MainWindow.cpp.o: \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qtableview.h \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/QTableWidgetItem \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QTextStream \
-  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qtextstream.h \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/QToolBar \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qtoolbar.h \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/QVBoxLayout \
@@ -1199,4 +1206,6 @@ CMakeFiles/pl0-gui.dir/gui/MainWindow.cpp.o: \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qlayoutitem.h \
   /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qgridlayout.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QStringList \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QStandardPaths \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qstandardpaths.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/iostream

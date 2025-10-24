@@ -5,9 +5,13 @@
 #include <QAction>
 #include <QApplication>
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QDebug>
+#include <QDir>
 #include <QDockWidget>
 #include <QFile>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QFontDatabase>
 #include <QGraphicsOpacityEffect>
 #include <QHeaderView>
@@ -30,6 +34,7 @@
 #include <QToolBar>
 #include <QVBoxLayout>
 #include <QStringList>
+#include <QStandardPaths>
 
 #include <algorithm>
 #include <iostream>
@@ -50,6 +55,7 @@ struct TreeNode {
 
 QString binaryOpName(pl0::BinaryOp op);
 QString unaryOpName(pl0::UnaryOp op);
+QString assignmentOpName(pl0::AssignmentOperator op);
 
 TreeNode buildExpressionTree(const pl0::Expression& expr);
 TreeNode buildStatementTree(const pl0::Statement& stmt);
@@ -94,14 +100,33 @@ TreeNode buildExpressionTree(const pl0::Expression& expr) {
   return node;
 }
 
+QString assignmentOpName(pl0::AssignmentOperator op) {
+  switch (op) {
+    case pl0::AssignmentOperator::Assign:
+      return QObject::tr(":=");
+    case pl0::AssignmentOperator::AddAssign:
+      return QObject::tr("+=");
+    case pl0::AssignmentOperator::SubAssign:
+      return QObject::tr("-=");
+    case pl0::AssignmentOperator::MulAssign:
+      return QObject::tr("*=");
+    case pl0::AssignmentOperator::DivAssign:
+      return QObject::tr("/=");
+    case pl0::AssignmentOperator::ModAssign:
+      return QObject::tr("%=");
+  }
+  return QObject::tr(":=");
+}
+
 TreeNode buildStatementTree(const pl0::Statement& stmt) {
   return std::visit(
       [&](const auto& value) -> TreeNode {
         using T = std::decay_t<decltype(value)>;
         TreeNode node;
         if constexpr (std::is_same_v<T, pl0::AssignmentStmt>) {
-          node.label = QObject::tr("赋值: %1")
-                           .arg(QString::fromStdString(value.target));
+          node.label = QObject::tr("赋值(%1): %2")
+                           .arg(assignmentOpName(value.op),
+                                QString::fromStdString(value.target));
           if (value.index) {
             TreeNode indexNode;
             indexNode.label = QObject::tr("索引");
@@ -757,6 +782,7 @@ void MainWindow::updateAstDiagram(const pl0::Program& program) {
   if (!pixmap.isNull()) {
     astImageLabel_->setPixmap(pixmap);
     astImageLabel_->setMinimumSize(pixmap.size());
+    exportAstImage(pixmap);
   } else {
     astImageLabel_->clear();
     astImageLabel_->setMinimumSize(QSize(0, 0));
@@ -783,6 +809,41 @@ QPixmap MainWindow::createAstPixmap(const pl0::Program& program,
   painter.translate(margin, margin);
   drawLayout(painter, layout, font);
   return pixmap;
+}
+
+void MainWindow::exportAstImage(const QPixmap& pixmap) const {
+  if (pixmap.isNull()) {
+    return;
+  }
+  QString outputPath;
+  if (!currentFilePath_.isEmpty()) {
+    QFileInfo info(currentFilePath_);
+    if (info.absolutePath().isEmpty()) {
+      return;
+    }
+    outputPath =
+        info.absolutePath() + QLatin1Char('/') + info.completeBaseName() + QStringLiteral(".png");
+  } else {
+    QString basePath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+    if (basePath.isEmpty()) {
+      basePath = QDir::homePath();
+    }
+    QDir exportDir(basePath);
+    if (!exportDir.exists(QStringLiteral("PL0_AST"))) {
+      exportDir.mkpath(QStringLiteral("PL0_AST"));
+    }
+    const QString fallbackName =
+        QStringLiteral("ast_%1").arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss")));
+    outputPath = exportDir.filePath(QStringLiteral("PL0_AST/%1.png").arg(fallbackName));
+  }
+  if (pixmap.save(outputPath, "PNG")) {
+    if (auto* status = const_cast<MainWindow*>(this)->statusBar()) {
+      status->showMessage(tr("已导出语法树图: %1").arg(QDir::toNativeSeparators(outputPath)), 5000);
+    }
+    qInfo() << "AST exported to" << QDir::toNativeSeparators(outputPath);
+  } else {
+    qWarning() << "Failed to export AST image to" << outputPath;
+  }
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event) {

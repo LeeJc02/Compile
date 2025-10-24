@@ -1,6 +1,5 @@
-var value;
+var x, y;
 begin
-  read(value);
-  write(value);
-  writeln(0);
+  read(x, y);
+  write(x + y)
 end.

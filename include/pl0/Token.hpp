@@ -1,3 +1,5 @@
+// 文件: Token.hpp
+// 功能: 定义词法分析阶段产生的 Token 结构
 #pragma once
 
 #include <cstdint>
@@ -8,6 +10,7 @@
 
 namespace pl0 {
 
+// 枚举: 表示全部 Token 类型
 enum class TokenKind : std::uint16_t {
   EndOfFile,
   Identifier,
@@ -18,6 +21,13 @@ enum class TokenKind : std::uint16_t {
   Star,
   Slash,
   Percent,
+  PlusPlus,
+  MinusMinus,
+  PlusEqual,
+  MinusEqual,
+  StarEqual,
+  SlashEqual,
+  PercentEqual,
   Assign,
   Equal,
   NotEqual,
@@ -57,6 +67,7 @@ enum class TokenKind : std::uint16_t {
   Not,
 };
 
+// 结构: 词法单元信息
 struct Token {
   TokenKind kind = TokenKind::EndOfFile;
   std::string lexeme;
@@ -65,7 +76,7 @@ struct Token {
   std::optional<bool> boolean;
 };
 
+// 函数: 将 Token 种类转换为字符串
 std::string to_string(TokenKind kind);
 
 }  // namespace pl0
-

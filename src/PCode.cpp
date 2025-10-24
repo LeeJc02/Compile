@@ -36,6 +36,8 @@ std::string to_string(Op op) {
       return "sti";
     case Op::CHK:
       return "chk";
+    case Op::DUP:
+      return "dup";
     case Op::NOP:
       return "nop";
   }
@@ -118,7 +120,7 @@ Instruction parse_instruction(const std::string& text) {
       {"lit", Op::LIT}, {"opr", Op::OPR}, {"lod", Op::LOD}, {"sto", Op::STO},
       {"cal", Op::CAL}, {"int", Op::INT}, {"jmp", Op::JMP}, {"jpc", Op::JPC},
       {"lda", Op::LDA}, {"idx", Op::IDX}, {"ldi", Op::LDI}, {"sti", Op::STI},
-      {"chk", Op::CHK}, {"nop", Op::NOP},
+      {"chk", Op::CHK}, {"dup", Op::DUP}, {"nop", Op::NOP},
   };
 
   auto op_it = op_map.find(normalize(op_text));

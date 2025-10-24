@@ -1,3 +1,5 @@
+// 文件: Lexer.cpp
+// 功能: 实现词法分析器, 将源码转化为 Token
 #include "pl0/Lexer.hpp"
 
 #include <cctype>
@@ -11,19 +13,23 @@ namespace pl0 {
 
 namespace {
 
+// 函数: 判断是否可以作为标识符首字符
 bool is_identifier_start(char ch) {
   return std::isalpha(static_cast<unsigned char>(ch)) != 0 || ch == '_';
 }
 
+// 函数: 判断是否可以作为标识符后续字符
 bool is_identifier_part(char ch) {
   return std::isalnum(static_cast<unsigned char>(ch)) != 0 || ch == '_';
 }
 
 }  // namespace
 
+// 构造: 保存源码副本并绑定诊断收集器
 Lexer::Lexer(std::string source, DiagnosticSink& diagnostics)
     : source_(std::move(source)), diagnostics_(diagnostics) {}
 
+// 函数: 预读指定偏移的 Token, 按需填充缓冲
 const Token& Lexer::peek(std::size_t lookahead) {
   if (!buffer_valid_) {
     buffer_.clear();
@@ -53,6 +59,7 @@ const Token& Lexer::peek(std::size_t lookahead) {
   return buffer_[lookahead];
 }
 
+// 函数: 取出下一个 Token
 Token Lexer::next() {
   const Token& token = peek(0);
   Token result = token;
@@ -62,6 +69,7 @@ Token Lexer::next() {
   return result;
 }
 
+// 函数: 重置扫描状态至起点
 void Lexer::reset() {
   index_ = 0;
   location_ = SourceLoc{1, 1};
@@ -70,6 +78,7 @@ void Lexer::reset() {
   buffer_valid_ = false;
 }
 
+// 函数: 构造 Token 并写入位置信息
 Token Lexer::make_token(TokenKind kind, std::string_view lexeme,
                         SourceLoc start, SourceLoc end) {
   Token token;
@@ -79,6 +88,7 @@ Token Lexer::make_token(TokenKind kind, std::string_view lexeme,
   return token;
 }
 
+// 函数: 跳过空白与注释片段
 void Lexer::skip_whitespace_and_comments() {
   bool advancing = true;
   while (advancing) {
@@ -138,6 +148,7 @@ void Lexer::skip_whitespace_and_comments() {
   }
 }
 
+// 函数: 解析整数字面量
 Token Lexer::lex_number(SourceLoc start) {
   std::size_t begin = index_;
   while (!is_end() &&
@@ -158,6 +169,7 @@ Token Lexer::lex_number(SourceLoc start) {
   return token;
 }
 
+// 函数: 解析标识符或关键字
 Token Lexer::lex_identifier_or_keyword(SourceLoc start) {
   std::size_t begin = index_;
   advance();
@@ -188,19 +200,48 @@ Token Lexer::lex_identifier_or_keyword(SourceLoc start) {
   return token;
 }
 
+// 函数: 解析符号 Token, 处理多字符运算符
 Token Lexer::lex_symbol(SourceLoc start) {
   char ch = current();
   advance();
   switch (ch) {
     case '+':
+      if (current() == '+') {
+        advance();
+        return make_token(TokenKind::PlusPlus, "++", start, location_);
+      }
+      if (current() == '=') {
+        advance();
+        return make_token(TokenKind::PlusEqual, "+=", start, location_);
+      }
       return make_token(TokenKind::Plus, "+", start, location_);
     case '-':
+      if (current() == '-') {
+        advance();
+        return make_token(TokenKind::MinusMinus, "--", start, location_);
+      }
+      if (current() == '=') {
+        advance();
+        return make_token(TokenKind::MinusEqual, "-=", start, location_);
+      }
       return make_token(TokenKind::Minus, "-", start, location_);
     case '*':
+      if (current() == '=') {
+        advance();
+        return make_token(TokenKind::StarEqual, "*=", start, location_);
+      }
       return make_token(TokenKind::Star, "*", start, location_);
     case '/':
+      if (current() == '=') {
+        advance();
+        return make_token(TokenKind::SlashEqual, "/=", start, location_);
+      }
       return make_token(TokenKind::Slash, "/", start, location_);
     case '%':
+      if (current() == '=') {
+        advance();
+        return make_token(TokenKind::PercentEqual, "%=", start, location_);
+      }
       return make_token(TokenKind::Percent, "%", start, location_);
     case '(':
       return make_token(TokenKind::LParen, "(", start, location_);
@@ -261,6 +302,7 @@ Token Lexer::lex_symbol(SourceLoc start) {
   return make_token(TokenKind::EndOfFile, "", start, location_);
 }
 
+// 函数: 获取当前位置字符
 char Lexer::current() const {
   if (is_end()) {
     return '\0';
@@ -268,6 +310,7 @@ char Lexer::current() const {
   return source_[index_];
 }
 
+// 函数: 预览后续字符
 char Lexer::peek_char(std::size_t offset) const {
   if (index_ + offset >= source_.size()) {
     return '\0';
@@ -275,6 +318,7 @@ char Lexer::peek_char(std::size_t offset) const {
   return source_[index_ + offset];
 }
 
+// 函数: 前进一个字符并更新位置信息
 char Lexer::advance() {
   if (is_end()) {
     return '\0';
@@ -289,10 +333,12 @@ char Lexer::advance() {
   return ch;
 }
 
+// 函数: 判断是否扫描完毕
 bool Lexer::is_end() const {
   return index_ >= source_.size();
 }
 
+// 函数: 报告未闭合注释
 void Lexer::report_unterminated_comment(SourceLoc start) {
   diagnostics_.report(
       {DiagnosticLevel::Error, DiagnosticCode::UnterminatedComment,

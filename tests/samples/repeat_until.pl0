@@ -6,3 +6,4 @@ begin
     write(x)
   until x = 3;
 end.
+

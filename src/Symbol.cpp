@@ -1,3 +1,5 @@
+// 文件: Symbol.cpp
+// 功能: 实现关键字映射查询
 #include "pl0/Symbol.hpp"
 
 #include <unordered_map>
@@ -6,6 +8,7 @@
 
 namespace pl0 {
 
+// 函数: 返回关键字查找表
 const std::unordered_map<std::string_view, Keyword>& keyword_table() {
   static const std::unordered_map<std::string_view, Keyword> table{
       {"begin", Keyword::Begin},   {"call", Keyword::Call},
@@ -24,6 +27,7 @@ const std::unordered_map<std::string_view, Keyword>& keyword_table() {
   return table;
 }
 
+// 函数: 根据词素匹配关键字
 std::optional<Keyword> lookup_keyword(std::string_view lexeme) {
   const auto& table = keyword_table();
   auto it = table.find(lexeme);
@@ -33,6 +37,7 @@ std::optional<Keyword> lookup_keyword(std::string_view lexeme) {
   return it->second;
 }
 
+// 函数: 将关键字映射为 Token 种类
 std::optional<TokenKind> keyword_token(Keyword keyword) {
   switch (keyword) {
     case Keyword::Begin:
@@ -84,4 +89,3 @@ std::optional<TokenKind> keyword_token(Keyword keyword) {
 }
 
 }  // namespace pl0
-

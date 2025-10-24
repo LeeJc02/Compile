@@ -45,3 +45,41 @@ TEST_CASE("Lexer skips comments and recognizes booleans") {
   REQUIRE(!false_token.boolean.value());
 }
 
+TEST_CASE("Lexer recognizes compound assignment operators") {
+  const char* source = "x += 1; x -= 2; x *= 3; x /= 4; x %= 5; x++; x--;";
+  pl0::DiagnosticSink diagnostics;
+  pl0::Lexer lexer(source, diagnostics);
+
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Identifier);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::PlusEqual);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Number);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Semicolon);
+
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Identifier);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::MinusEqual);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Number);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Semicolon);
+
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Identifier);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::StarEqual);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Number);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Semicolon);
+
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Identifier);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::SlashEqual);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Number);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Semicolon);
+
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Identifier);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::PercentEqual);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Number);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Semicolon);
+
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Identifier);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::PlusPlus);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Semicolon);
+
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Identifier);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::MinusMinus);
+  REQUIRE(lexer.next().kind == pl0::TokenKind::Semicolon);
+}

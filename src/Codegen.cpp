@@ -1,5 +1,8 @@
+// 文件: Codegen.cpp
+// 功能: 实现 AST 到 P-Code 的指令生成
 #include "pl0/Codegen.hpp"
 
+#include <optional>
 #include <utility>
 #include <variant>
 
@@ -7,6 +10,7 @@ namespace pl0 {
 
 namespace {
 
+// 结构: 多重访问器用于 visit
 template <typename... Ts>
 struct Overloaded : Ts... {
   using Ts::operator()...;
@@ -15,28 +19,52 @@ struct Overloaded : Ts... {
 template <typename... Ts>
 Overloaded(Ts...) -> Overloaded<Ts...>;
 
+// 函数: 获取复合赋值对应的操作码
+std::optional<Opr> operation_for_assignment(AssignmentOperator op) {
+  switch (op) {
+    case AssignmentOperator::Assign:
+      return std::nullopt;
+    case AssignmentOperator::AddAssign:
+      return Opr::ADD;
+    case AssignmentOperator::SubAssign:
+      return Opr::SUB;
+    case AssignmentOperator::MulAssign:
+      return Opr::MUL;
+    case AssignmentOperator::DivAssign:
+      return Opr::DIV;
+    case AssignmentOperator::ModAssign:
+      return Opr::MOD;
+  }
+  return std::nullopt;
+}
+
 }  // namespace
 
+// 构造: 绑定符号表、输出缓冲与诊断器
 CodeGenerator::CodeGenerator(SymbolTable& symbols, InstructionSequence& output,
                              DiagnosticSink& diagnostics,
                              const CompilerOptions& options)
     : symbols_(symbols), output_(output), diagnostics_(diagnostics), options_(options) {}
 
+// 函数: 生成整個程序
 void CodeGenerator::emit_program(const Program& program) {
   emit_block(program.block);
 }
 
+// 函数: 写入单条指令并返回索引
 int CodeGenerator::emit_instruction(const Instruction& instr) {
   output_.push_back(instr);
   return static_cast<int>(output_.size()) - 1;
 }
 
+// 函数: 回填跳转目标
 void CodeGenerator::patch(int index, int target) {
   if (index >= 0 && index < static_cast<int>(output_.size())) {
     output_[static_cast<std::size_t>(index)].argument = target;
   }
 }
 
+// 函数: 生成块级代码, 包含声明与语句
 void CodeGenerator::emit_block(const Block& block) {
   symbols_.enter_scope();
   auto& scope = symbols_.current_scope();
@@ -89,6 +117,7 @@ void CodeGenerator::emit_block(const Block& block) {
   symbols_.leave_scope();
 }
 
+// 函数: 调度语句生成
 void CodeGenerator::emit_statement(const Statement& stmt) {
   std::visit(
       Overloaded{
@@ -105,6 +134,7 @@ void CodeGenerator::emit_statement(const Statement& stmt) {
       stmt.value);
 }
 
+// 函数: 依次生成语句列表
 void CodeGenerator::emit_statements(const std::vector<StmtPtr>& stmts) {
   for (const auto& stmt : stmts) {
     if (stmt) {
@@ -113,6 +143,7 @@ void CodeGenerator::emit_statements(const std::vector<StmtPtr>& stmts) {
   }
 }
 
+// 函数: 生成赋值语句, 支持数组/复合操作
 void CodeGenerator::emit_assignment(const AssignmentStmt& stmt,
                                     const SourceRange& range) {
   const Symbol* symbol = resolve(stmt.target, range);
@@ -127,6 +158,7 @@ void CodeGenerator::emit_assignment(const AssignmentStmt& stmt,
   }
 
   int level_diff = symbols_.current_scope().level - symbol->level;
+  auto compound = operation_for_assignment(stmt.op);
   if (stmt.index) {
     if (symbol->kind != SymbolKind::Array) {
       diagnostics_.report({DiagnosticLevel::Error, DiagnosticCode::InvalidArraySubscript,
@@ -140,14 +172,28 @@ void CodeGenerator::emit_assignment(const AssignmentStmt& stmt,
       emit_instruction({Op::CHK, 0, static_cast<int>(symbol->size)});
     }
     emit_instruction({Op::IDX, 0, 0});
-    emit_expression(*stmt.value);
+    if (!compound) {
+      emit_expression(*stmt.value);
+    } else {
+      emit_instruction({Op::DUP, 0, 0});
+      emit_instruction({Op::LDI, 0, 0});
+      emit_expression(*stmt.value);
+      emit_instruction({Op::OPR, 0, static_cast<int>(*compound)});
+    }
     emit_instruction({Op::STI, 0, 0});
   } else {
-    emit_expression(*stmt.value);
+    if (!compound) {
+      emit_expression(*stmt.value);
+    } else {
+      emit_instruction({Op::LOD, level_diff, symbol->address});
+      emit_expression(*stmt.value);
+      emit_instruction({Op::OPR, 0, static_cast<int>(*compound)});
+    }
     emit_instruction({Op::STO, level_diff, symbol->address});
   }
 }
 
+// 函数: 生成过程调用指令
 void CodeGenerator::emit_call(const std::string& callee,
                               const std::vector<ExprPtr>& arguments,
                               const SourceRange& range) {
@@ -169,6 +215,7 @@ void CodeGenerator::emit_call(const std::string& callee,
   emit_instruction({Op::CAL, level_diff, symbol->address});
 }
 
+// 函数: 生成 if/else 控制流
 void CodeGenerator::emit_if(const IfStmt& stmt) {
   emit_expression(*stmt.condition);
   int else_jump = emit_instruction({Op::JPC, 0, 0});
@@ -186,6 +233,7 @@ void CodeGenerator::emit_if(const IfStmt& stmt) {
   }
 }
 
+// 函数: 生成 while 循环控制流
 void CodeGenerator::emit_while(const WhileStmt& stmt) {
   int loop_start = static_cast<int>(output_.size());
   emit_expression(*stmt.condition);
@@ -195,6 +243,7 @@ void CodeGenerator::emit_while(const WhileStmt& stmt) {
   patch(exit_jump, static_cast<int>(output_.size()));
 }
 
+// 函数: 生成 repeat 循环控制流
 void CodeGenerator::emit_repeat(const RepeatStmt& stmt) {
   int loop_start = static_cast<int>(output_.size());
   emit_statements(stmt.body);
@@ -202,6 +251,7 @@ void CodeGenerator::emit_repeat(const RepeatStmt& stmt) {
   emit_instruction({Op::JPC, 0, loop_start});
 }
 
+// 函数: 处理 read 语句并生成输入指令
 void CodeGenerator::emit_read(const ReadStmt& stmt, const SourceRange& range) {
   for (const auto& name : stmt.targets) {
     const Symbol* symbol = resolve(name, range);
@@ -219,6 +269,7 @@ void CodeGenerator::emit_read(const ReadStmt& stmt, const SourceRange& range) {
   }
 }
 
+// 函数: 处理 write/writeln 输出
 void CodeGenerator::emit_write(const WriteStmt& stmt) {
   for (const auto& value : stmt.values) {
     emit_expression(*value);
@@ -229,6 +280,7 @@ void CodeGenerator::emit_write(const WriteStmt& stmt) {
   }
 }
 
+// 函数: 遍历表达式节点生成指令
 void CodeGenerator::emit_expression(const Expression& expr) {
   std::visit(
       Overloaded{
@@ -253,6 +305,7 @@ void CodeGenerator::emit_expression(const Expression& expr) {
       expr.value);
 }
 
+// 函数: 对二元运算生成对应 OPR
 void CodeGenerator::emit_binary(const BinaryExpr& expr) {
   emit_expression(*expr.lhs);
   emit_expression(*expr.rhs);
@@ -301,6 +354,7 @@ void CodeGenerator::emit_binary(const BinaryExpr& expr) {
   emit_instruction({Op::OPR, 0, static_cast<int>(operation)});
 }
 
+// 函数: 对一元运算生成对应 OPR
 void CodeGenerator::emit_unary(const UnaryExpr& expr) {
   emit_expression(*expr.operand);
   Opr operation;
@@ -320,6 +374,7 @@ void CodeGenerator::emit_unary(const UnaryExpr& expr) {
   emit_instruction({Op::OPR, 0, static_cast<int>(operation)});
 }
 
+// 函数: 按标识符种类加载值
 void CodeGenerator::emit_identifier(const IdentifierExpr& expr,
                                     const SourceRange& range) {
   const Symbol* symbol = resolve(expr.name, range);
@@ -347,6 +402,7 @@ void CodeGenerator::emit_identifier(const IdentifierExpr& expr,
   }
 }
 
+// 函数: 数组访问生成地址与可选加载
 void CodeGenerator::emit_array_access(const ArrayAccessExpr& expr,
                                       const SourceRange& range, bool load_value) {
   const Symbol* symbol = resolve(expr.name, range);
@@ -370,6 +426,7 @@ void CodeGenerator::emit_array_access(const ArrayAccessExpr& expr,
   }
 }
 
+// 函数: 记录常量并检测重定义
 void CodeGenerator::emit_const(const ConstDecl& decl) {
   if (symbols_.lookup_in_current_scope(decl.name)) {
     diagnostics_.report({DiagnosticLevel::Error, DiagnosticCode::Redeclaration,
@@ -386,6 +443,7 @@ void CodeGenerator::emit_const(const ConstDecl& decl) {
   exported_symbols_.push_back(stored);
 }
 
+// 函数: 记录变量或数组声明
 void CodeGenerator::emit_var(const VarDecl& decl) {
   if (symbols_.lookup_in_current_scope(decl.name)) {
     diagnostics_.report({DiagnosticLevel::Error, DiagnosticCode::Redeclaration,
@@ -410,6 +468,7 @@ void CodeGenerator::emit_var(const VarDecl& decl) {
   scope.data_offset += static_cast<int>(size);
 }
 
+// 函数: 为过程分配入口并生成函数体
 void CodeGenerator::emit_procedure(const ProcedureDecl& decl, Symbol& symbol) {
   symbol.address = static_cast<int>(output_.size());
   exported_symbols_.push_back(symbol);
@@ -418,6 +477,7 @@ void CodeGenerator::emit_procedure(const ProcedureDecl& decl, Symbol& symbol) {
   }
 }
 
+// 函数: 查找符号并在缺失时报告错误
 const Symbol* CodeGenerator::resolve(const std::string& name,
                                      const SourceRange& range) const {
   const Symbol* symbol = symbols_.lookup(name);

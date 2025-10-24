@@ -2118,8 +2118,13 @@ CMakeFiles/pl0-gui.dir/gui/MainWindow.cpp.o: /Users/lee/Documents/Compile/gui/Ma
   /Users/lee/Documents/Compile/include/pl0/Token.hpp \
   /Users/lee/Documents/Compile/include/pl0/VM.hpp \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QCoreApplication \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QDateTime \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QDebug \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QDir \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QFile \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QFileInfo \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QRegularExpression \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QStandardPaths \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QStringList \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QTextStream \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QVector \
@@ -2136,9 +2141,12 @@ CMakeFiles/pl0-gui.dir/gui/MainWindow.cpp.o: /Users/lee/Documents/Compile/gui/Ma
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qconfig.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qcontainerfwd.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qcontainertools_impl.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qcontiguouscache.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qcoreapplication.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qcoreevent.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdatastream.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdatetime.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdebug.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdir.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qeventloop.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qfile.h \
@@ -2180,6 +2188,7 @@ CMakeFiles/pl0-gui.dir/gui/MainWindow.cpp.o: /Users/lee/Documents/Compile/gui/Ma
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qsharedpointer.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qsharedpointer_impl.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qsize.h \
+  /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qstandardpaths.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qstring.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qstringalgorithms.h \
   /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qstringlist.h \
@@ -4632,6 +4641,8 @@ pl0-gui_autogen/mocs_compilation.cpp:
 
 /opt/homebrew/opt/qt@5/lib/QtGui.framework/Headers/QIcon:
 
+/opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qstandardpaths.h:
+
 /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qtablewidget.h:
 
 /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qregularexpression.h:
@@ -4644,7 +4655,17 @@ pl0-gui_autogen/mocs_compilation.cpp:
 
 /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qeventloop.h:
 
+/opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdebug.h:
+
+/opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qdatetime.h:
+
+/opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QStandardPaths:
+
 /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QRegularExpression:
+
+/opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QDebug:
+
+/opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qcontiguouscache.h:
 
 /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QCoreApplication:
 
@@ -5239,6 +5260,8 @@ pl0-gui_autogen/mocs_compilation.cpp:
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/ranges_min.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/extent.h:
+
+/opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QDateTime:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/enable_if.h:
 
@@ -5914,6 +5937,8 @@ pl0-gui_autogen/DMHXEJ42XS/moc_CodeEditor.cpp:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/in_place.h:
 
+/opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QFileInfo:
+
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_defaults.h:
 
 /opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/qhash.h:
@@ -6495,6 +6520,8 @@ pl0-gui_autogen/DMHXEJ42XS/moc_CodeEditor.cpp:
 /opt/homebrew/opt/qt@5/lib/QtWidgets.framework/Headers/qlayoutitem.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/min_max_result.h:
+
+/opt/homebrew/opt/qt@5/lib/QtCore.framework/Headers/QDir:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__debug_utils/sanitizers.h:
 

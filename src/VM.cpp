@@ -1,3 +1,5 @@
+// 文件: VM.cpp
+// 功能: 实现基于栈的 P-Code 虚拟机
 #include "pl0/VM.hpp"
 
 #include <iostream>
@@ -7,14 +9,17 @@ namespace pl0 {
 
 namespace {
 
+// 常量: 初始栈容量
 constexpr std::size_t kInitialStackSize = 1024;
 
 }  // namespace
 
+// 构造: 记录诊断器与运行时选项
 VirtualMachine::VirtualMachine(DiagnosticSink& diagnostics,
                                const RunnerOptions& options)
     : diagnostics_(diagnostics), options_(options) {}
 
+// 函数: 执行指令序列并返回运行结果
 VirtualMachine::Result VirtualMachine::execute(const InstructionSequence& code) {
   Result result;
   stack_.assign(kInitialStackSize, 0);
@@ -259,6 +264,17 @@ VirtualMachine::Result VirtualMachine::execute(const InstructionSequence& code) 
         push(index);
         break;
       }
+      case Op::DUP: {
+        if (stack_top_ == 0) {
+          diagnostics_.report({DiagnosticLevel::Error, DiagnosticCode::StackUnderflow,
+                               "stack underflow on dup", {}});
+          result.success = false;
+          return result;
+        }
+        auto value = at(stack_top_ - 1);
+        push(value);
+        break;
+      }
       case Op::NOP:
         break;
       }
@@ -272,6 +288,7 @@ VirtualMachine::Result VirtualMachine::execute(const InstructionSequence& code) 
   return result;
 }
 
+// 函数: 向栈压入一个值
 void VirtualMachine::push(std::int64_t value) {
   if (stack_top_ >= static_cast<int>(stack_.size())) {
     stack_.resize(static_cast<std::size_t>(stack_top_) + 1024, 0);
@@ -279,6 +296,7 @@ void VirtualMachine::push(std::int64_t value) {
   stack_[static_cast<std::size_t>(stack_top_++)] = value;
 }
 
+// 函数: 弹出栈顶值
 std::int64_t VirtualMachine::pop() {
   if (stack_top_ == 0) {
     throw std::runtime_error("stack underflow");
@@ -286,6 +304,7 @@ std::int64_t VirtualMachine::pop() {
   return stack_[static_cast<std::size_t>(--stack_top_)];
 }
 
+// 函数: 访问指定栈下标
 std::int64_t& VirtualMachine::at(int index) {
   if (index < 0) {
     throw std::runtime_error("negative stack access");
@@ -296,6 +315,7 @@ std::int64_t& VirtualMachine::at(int index) {
   return stack_[static_cast<std::size_t>(index)];
 }
 
+// 函数: 按静态链回溯基地址
 int VirtualMachine::base(int level, int b) const {
   int result = b;
   while (level > 0) {

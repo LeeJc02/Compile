@@ -237,7 +237,8 @@ run_instructions()
      - `跟踪虚拟机指令` → 运行时在输出面板追加执行轨迹。
 
 4. **AST 可视化**
-   - `updateAstDiagram()`（`gui/MainWindow.cpp:321-403`）使用自定义树布局，将 AST 渲染成节点/连线图，适合课堂讲解。
+  - `updateAstDiagram()`（`gui/MainWindow.cpp:321-403`）使用自定义树布局，将 AST 渲染成节点/连线图，适合课堂讲解。
+  - 编译成功会自动导出语法树 PNG：若文件已有路径则输出到源文件目录，若是临时内容则写入系统图片目录下的 `PL0_AST/`，状态栏会提示完整导出路径。
 
 
 ### CLI 终端命令行界面
@@ -343,8 +344,8 @@ pl0dis <input.pcode>
 | 语法分析    | `src/Parser.cpp:52-225`       | 递归下降 + Panic 模式同步                     | `parse_if`、`parse_repeat` 等新语句；`synchronize()` 根据 FIRST/FOLLOW 恢复。 |
 | 抽象语法树  | `include/pl0/AST.hpp`         | `Expression`/`Statement` 变体                 | 使用 `std::variant` 表达不同节点，辅以 `unique_ptr` 管理所有权。 |
 | 符号表      | `src/SymbolTable.cpp`         | 层次作用域 + 地址分配                         | `enter_scope()`/`leave_scope()` 维护静态链深度与局部变量偏移。 |
-| 代码生成    | `src/Codegen.cpp:33-212`      | LDA/LDI/STI/CHK、If/While/Repeat              | 支持数组越界检查、布尔/逻辑运算、`repeat` 后测循环；过程尚未加入参数。 |
-| P-Code 表达 | `include/pl0/PCode.hpp`       | 新指令 LDA/IDX/CHK                            | 扩展原 PL/0 指令集以支持数组与安全检查。                     |
+| 代码生成    | `src/Codegen.cpp:33-212`      | LDA/LDI/STI/CHK/DUP、If/While/Repeat、复合赋值 | 支持数组越界检查、布尔/逻辑运算、`repeat` 后测循环；复合赋值根据操作符生成对应算术；过程尚未加入参数。 |
+| P-Code 表达 | `include/pl0/PCode.hpp`       | 新指令 LDA/IDX/CHK/DUP                        | 扩展原 PL/0 指令集以支持数组、越界检查与地址复用。           |
 | 虚拟机      | `src/VM.cpp:19-210`           | 栈式执行、调试追踪、防护                      | 自动扩容栈、检测除零/越界、记录 `last_value`。               |
 | 诊断系统    | `include/pl0/Diagnostics.hpp` | 错误分级、打印格式                            | CLI 与 GUI 共享 `print_diagnostics()`，确保消息一致。        |
 | 高层封装    | `src/Driver.cpp:145-227`      | `compile_source_text()`、`run_instructions()` | 统一入口，支持 token/AST/符号/P-Code dump，与 GUI 共享。     |
@@ -355,7 +356,62 @@ pl0dis <input.pcode>
 
 ---
 
-## 六、目标实现
+## 六、语法扩展与实现
+
+### 1. 词法与记号
+- `src/Lexer.cpp` 通过指针推进和手写状态机解析空白、行注释 `//`、块注释 `/*…*/`，并借助 `std::from_chars` 读取整数字面量。
+- 关键字映射集中在 `src/Symbol.cpp` 的 `keyword_table()`，最终落在 `TokenKind`（`include/pl0/Token.hpp`）枚举中。
+- 复合赋值与自增/自减在 `Lexer::lex_symbol()` 中以多字符匹配实现，当前支持 `+= -= *= /= %= ++ --`；对应的 `TokenKind` 与 `to_string()` 均已更新。
+
+### 2. 声明语法
+- 程序结构：`Program → Block '.'`，由 `Parser::parse_program()`（`src/Parser.cpp`）实现。
+- 常量声明：`const` 列表允许数字或布尔字面量；常量值写入 `Symbol::constant_value`，代码生成阶段直接使用 `Op::LIT`。
+- 变量/数组：`var` 语句支持 `name` 或 `name[整型常量]`；数组容量存入 `Symbol::size`，`emit_var()` 为其分配静态偏移。
+- 过程声明：`procedure name; Block;` 采用两阶段策略，先注册符号再生成指令，支持前向与递归调用（参数尚未开放）。
+
+### 3. 语句语法
+- 语句分派：`Parser::parse_statement()` 覆盖赋值、调用、`begin...end`、`if/else`、`while`、`repeat/until`、`read`、`write/writeln`。
+- 赋值：`AssignmentStmt` 新增 `AssignmentOperator` 枚举；`x += y` 等价于 `x := x + y`。数组下标赋值 `a[i] += v` 通过地址加载、`Op::DUP`、`Op::LDI` 组合完成读改写。
+- 条件与循环：`emit_if()`、`emit_while()`、`emit_repeat()` 分别利用 `Op::JPC` / `Op::JMP` 构造控制流；`repeat` 为后测循环。
+- I/O：`read` 语句调用 `Opr::READ`，`write`/`writeln` 对应 `Opr::WRITE`/`Opr::WRITELN`，所有读写使用 `DiagnosticSink` 汇报错误。
+
+### 4. 表达式语法（自低到高）
+- `Expression` 支持布尔短路逻辑 (`or`)、`LogicTerm` 处理 `and`，逻辑非 `not` 在 `parse_logic_factor()` 中作为一元运算。
+- 比较运算 `= # < <= > >=` 产生 `BinaryOp`；算术部分提供 `+ - * / %`，均映射为虚拟机 `Opr` 操作。
+- 一元运算包含 `+ - not odd`，其中 `odd` 直接调用 `Opr::ODD` 测试奇偶。
+- 基本因子：整型/布尔字面量、标识符、数组访问、括号表达式。数组访问由 `emit_array_access()` 统一处理，可选越界检查 `Op::CHK`。
+
+### 5. P-Code 与运行期
+- 指令枚举 `include/pl0/PCode.hpp` 在传统 PL/0 基础上扩展 `LDA/IDX/LDI/STI/CHK/DUP`，覆盖数组寻址、越界检查与复合赋值所需的地址复制。
+- `CodeGenerator` 使用访问器模式（`std::visit` + `Overloaded`）生成指令序列；`operation_for_assignment()` 根据 `AssignmentOperator` 选择 `Opr::ADD/SUB/MUL/DIV/MOD`。
+- `VirtualMachine` (`src/VM.cpp`) 采用自动扩容的数组栈。`Op::DUP` 会复制栈顶值；`Op::CHK` 在越界时经 `DiagnosticSink` 报错后终止执行。
+
+### 6. 调试与可视化
+- CLI 通过 `--dump-tokens/--dump-ast/--dump-sym/--dump-pcode` 输出各阶段快照，函数集中在 `src/Driver.cpp`。
+- Qt GUI 的 AST、符号表、指令面板复用同一数据结构；`assignmentOpName()` 在界面上显示 `+=` 等新操作。
+
+### 7. 测试覆盖
+- `tests/unit/LexerTests.cpp` 检查复合赋值、自增自减等新记号。
+- `tests/unit/ParserTests.cpp` 验证 `AssignmentOperator` 枚举、字面量降级与语句列表解析。
+- `tests/unit/CodegenTests.cpp` 对复合赋值、数组复合赋值及 `Op::DUP`/`Op::LDI` 插入进行断言。
+- `tests/unit/VmTests.cpp` 运行实际程序，确认虚拟机对 `+= -= *= /= %= ++ --` 的算术语义。
+
+### 8. 语法特性与示例映射
+| 语法特性 | 示例程序 | 实现要点 |
+| -------- | -------- | -------- |
+| 自增 / 自减 `++ --` | `tests/samples/compound_assign.pl0` | 词法在 `src/Lexer.cpp:200` 扩展多字符记号；递归下降于 `src/Parser.cpp:218` 将其转换为 `AssignmentOperator::Add/SubAssign`；`src/Codegen.cpp:135` 生成 `LOD` + `Opr::ADD/SUB` 序列。 |
+| 复合赋值 `+= -= *= /= %=` | `tests/samples/compound_assign.pl0`、`tests/samples/while_arith.pl0` | 与上相同的词法/语法管道，代码生成在 `src/Codegen.cpp:149` 分支调用 `operation_for_assignment()` 并发射对应算术操作。 |
+| 数组读写与越界循环 | `tests/samples/array_bounds.pl0` | `Lexer` 识别 `[]`，`Parser::parse_var_declarations()` 注册大小；`CodeGenerator::emit_array_access()` 使用 `Op::LDA/CHK/IDX/LDI`；虚拟机的 `Op::CHK` 位于 `src/VM.cpp:251`。 |
+| 布尔逻辑 `and/or/not` | `tests/samples/if_else.pl0` | `Parser::parse_expression()` / `parse_logic_term()` 组合出 `BinaryOp::And/Or` 与 `UnaryOp::Not`；代码生成后在 `src/Codegen.cpp:172` 发射逻辑 `Opr`。 |
+| `repeat ... until` 后测循环 | `tests/samples/repeat_until.pl0` | `Parser::parse_repeat()` 构造 `RepeatStmt`，`CodeGenerator::emit_repeat()` 负责回跳；虚拟机 `Op::JPC` 控制退出。 |
+| 多目标 `read` / `write` | `tests/samples/io_mix.pl0` | `parse_read()` 支持括号内多标识符；`parse_write()` 兼容多表达式输出，运行时由 `Opr::READ/WRITE`（`src/VM.cpp:129` 起）完成。 |
+
+### 9. 示例批量测试脚本
+- 执行 `python tools/run_samples.py`（或直接运行脚本）即可依次编译、运行 `tests/samples/*.pl0`，并将源代码、`pl0c` 反汇编结果与运行输出统一写入 `tests/sample_report.txt`，方便课堂演示或回归验证。
+
+---
+
+## 七、目标实现
 
 | 号   | 评分条目                           | 完成度 & 证据                                                |
 | ---- | ---------------------------------- | ------------------------------------------------------------ |
@@ -370,7 +426,7 @@ pl0dis <input.pcode>
 
 ---
 
-## 七、反思总结
+## 八、反思总结
 
 1. **尚未实现/可改进项**
    - 过程参数、值/引用传递尚未落地（`CodeGenerator::emit_call()` 当前直接报错）。
@@ -385,6 +441,3 @@ pl0dis <input.pcode>
    - 在 GUI 中整合 **断点调试/单步执行**，辅助讲解运行时栈。
    - 编写 **自动评分脚本**（结合 `pl0c` + `pl0run` + `diff`），方便实验班批改。
    - 构建 **在线版演示**（例如使用 Qt for WebAssembly 或 CLI + Web 前端），便于比赛/答辩展示。
-
-
-

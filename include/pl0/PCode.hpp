@@ -1,3 +1,5 @@
+// 文件: PCode.hpp
+// 功能: 定义 P-Code 指令集及读写工具
 #pragma once
 
 #include <cstdint>
@@ -8,6 +10,7 @@
 
 namespace pl0 {
 
+// 枚举: 指令操作码
 enum class Op : std::uint8_t {
   LIT,
   OPR,
@@ -22,9 +25,11 @@ enum class Op : std::uint8_t {
   LDI,
   STI,
   CHK,
+  DUP,
   NOP,
 };
 
+// 枚举: OPR 子操作码
 enum class Opr : std::uint8_t {
   RET = 0,
   NEG = 1,
@@ -48,6 +53,7 @@ enum class Opr : std::uint8_t {
   NOT = 19,
 };
 
+// 结构: 指令实体
 struct Instruction {
   Op op = Op::NOP;
   std::int32_t level = 0;
@@ -56,12 +62,15 @@ struct Instruction {
 
 using InstructionSequence = std::vector<Instruction>;
 
+// 函数: 指令/操作码转字符串
 std::string to_string(Op op);
 std::string to_string(Opr opr);
 std::string to_string(const Instruction& instr);
 
+// 函数: 文本解析为指令
 Instruction parse_instruction(const std::string& text);
 
+// 函数: 序列化/反序列化指令流
 void serialize_instructions(const InstructionSequence& instructions,
                             std::ostream& out);
 

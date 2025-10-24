@@ -1,0 +1,32 @@
+Start testing: Oct 24 18:38 CST
+----------------------------------------------------------
+1/1 Testing: pl0
+1/1 Test: pl0
+Command: "/Users/lee/Documents/Compile/build/tests/pl0_tests"
+Directory: /Users/lee/Documents/Compile/build/tests
+"pl0" start time: Oct 24 18:38 CST
+Output:
+----------------------------------------------------------
+[  OK  ] Lexer tokenizes keywords, identifiers, and numbers
+[  OK  ] Lexer skips comments and recognizes booleans
+[  OK  ] Lexer recognizes compound assignment operators
+[  OK  ] Parser handles if-then-else statements
+[  OK  ] Parser understands repeat-until loop
+[  OK  ] Parser handles compound assignments and increments
+[  OK  ] Code generator emits write instruction
+[  OK  ] Array assignment emits bounds check when enabled
+[  OK  ] Compound assignment generates arithmetic sequence
+[  OK  ] Array compound assignment duplicates address before store
+[  OK  ] Compound assignments map to arithmetic operators
+[  OK  ] Virtual machine executes program and produces expected output
+[  OK  ] Virtual machine handles compound assignments and increments
+13/13 tests passed
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"pl0" end time: Oct 24 18:38 CST
+"pl0" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 24 18:38 CST

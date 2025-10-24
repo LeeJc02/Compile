@@ -25,6 +25,20 @@ std::string to_string(TokenKind kind) {
       return "/";
     case TokenKind::Percent:
       return "%";
+    case TokenKind::PlusPlus:
+      return "++";
+    case TokenKind::MinusMinus:
+      return "--";
+    case TokenKind::PlusEqual:
+      return "+=";
+    case TokenKind::MinusEqual:
+      return "-=";
+    case TokenKind::StarEqual:
+      return "*=";
+    case TokenKind::SlashEqual:
+      return "/=";
+    case TokenKind::PercentEqual:
+      return "%=";
     case TokenKind::Assign:
       return ":=";
     case TokenKind::Equal:
@@ -104,4 +118,3 @@ std::string to_string(TokenKind kind) {
 }
 
 }  // namespace pl0
-

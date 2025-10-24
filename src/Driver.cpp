@@ -1,3 +1,5 @@
+// 文件: Driver.cpp
+// 功能: 实现编译流程封装与调试输出工具
 #include "pl0/Driver.hpp"
 
 #include <fstream>
@@ -16,12 +18,14 @@ namespace pl0 {
 
 namespace {
 
+// 函数: 输出指定缩进
 void indent(std::ostream& out, int level) {
   for (int i = 0; i < level; ++i) {
     out << "  ";
   }
 }
 
+// 函数: 映射二元运算符名称
 const char* binary_op_name(BinaryOp op) {
   switch (op) {
     case BinaryOp::Add:
@@ -54,6 +58,7 @@ const char* binary_op_name(BinaryOp op) {
   return "Unknown";
 }
 
+// 函数: 映射一元运算符名称
 const char* unary_op_name(UnaryOp op) {
   switch (op) {
     case UnaryOp::Positive:
@@ -68,8 +73,30 @@ const char* unary_op_name(UnaryOp op) {
   return "Unknown";
 }
 
+// 函数: 映射赋值运算符名称
+const char* assignment_op_name(AssignmentOperator op) {
+  switch (op) {
+    case AssignmentOperator::Assign:
+      return "Assign";
+    case AssignmentOperator::AddAssign:
+      return "AddAssign";
+    case AssignmentOperator::SubAssign:
+      return "SubAssign";
+    case AssignmentOperator::MulAssign:
+      return "MulAssign";
+    case AssignmentOperator::DivAssign:
+      return "DivAssign";
+    case AssignmentOperator::ModAssign:
+      return "ModAssign";
+  }
+  return "Assign";
+}
+
+// 函数: 打印表达式 AST
 void dump_expression(const Expression& expr, std::ostream& out, int level);
+// 函数: 打印语句 AST
 void dump_statement(const Statement& stmt, std::ostream& out, int level);
+// 函数: 打印块 AST
 void dump_block(const Block& block, std::ostream& out, int level);
 
 void dump_expression(const Expression& expr, std::ostream& out, int level) {
@@ -115,7 +142,8 @@ void dump_statement(const Statement& stmt, std::ostream& out, int level) {
         using T = std::decay_t<decltype(node)>;
         if constexpr (std::is_same_v<T, AssignmentStmt>) {
           indent(out, level);
-          out << "Assignment " << node.target << '\n';
+          out << "Assignment " << node.target;
+          out << " [" << assignment_op_name(node.op) << "]\n";
           if (node.index) {
             indent(out, level + 1);
             out << "Index" << '\n';
@@ -279,6 +307,7 @@ std::vector<Token> collect_tokens(const std::string& source) {
 
 }  // namespace pl0
 
+// 函数: 编译内存中的源码文本
 pl0::CompileResult pl0::compile_source_text(std::string_view source_name,
                                             const std::string& source,
                                             const pl0::CompilerOptions& options,
@@ -311,6 +340,7 @@ pl0::CompileResult pl0::compile_source_text(std::string_view source_name,
   return result;
 }
 
+// 函数: 从文件加载并编译源码
 pl0::CompileResult pl0::compile_file(const std::filesystem::path& input,
                                      const pl0::CompilerOptions& options,
                                      const pl0::DumpOptions& dumps,
@@ -337,6 +367,7 @@ pl0::CompileResult pl0::compile_file(const std::filesystem::path& input,
   return result;
 }
 
+// 函数: 从文件读取 P-Code 序列
 pl0::InstructionSequence pl0::load_pcode_file(
     const std::filesystem::path& input) {
   std::ifstream file(input);
@@ -346,6 +377,7 @@ pl0::InstructionSequence pl0::load_pcode_file(
   return pl0::deserialize_instructions(file);
 }
 
+// 函数: 将指令序列保存为文件
 void pl0::save_pcode_file(const std::filesystem::path& output,
                           const pl0::InstructionSequence& instructions) {
   std::ofstream file(output);
@@ -355,6 +387,7 @@ void pl0::save_pcode_file(const std::filesystem::path& output,
   pl0::serialize_instructions(instructions, file);
 }
 
+// 函数: 执行编译结果
 pl0::VirtualMachine::Result pl0::run_instructions(
     const pl0::InstructionSequence& code, pl0::DiagnosticSink& diagnostics,
     const pl0::RunnerOptions& options) {
@@ -362,6 +395,7 @@ pl0::VirtualMachine::Result pl0::run_instructions(
   return vm.execute(code);
 }
 
+// 函数: 输出全部诊断
 void pl0::print_diagnostics(const pl0::DiagnosticSink& diagnostics,
                             std::ostream& out) {
   for (const auto& diag : diagnostics.diagnostics()) {

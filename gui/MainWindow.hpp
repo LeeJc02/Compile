@@ -60,6 +60,7 @@ class MainWindow : public QMainWindow {
   void markDocumentDirty();
   void updateFonts();
   void updateAstDiagram(const pl0::Program& program);
+  void exportAstImage(const QPixmap& pixmap) const;
   QPixmap createAstPixmap(const pl0::Program& program, const QFont& font) const;
   void relayoutOverlays();
 
