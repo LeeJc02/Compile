@@ -1,3 +1,5 @@
+// 文件: Utility.cpp
+// 功能: 实现常用工具函数
 #include "pl0/Utility.hpp"
 
 #include <fstream>
@@ -6,6 +8,7 @@
 
 namespace pl0 {
 
+// 函数: 读取 UTF-8 文件内容
 std::string read_file_utf8(const std::filesystem::path& path) {
   std::ifstream file(path, std::ios::binary);
   if (!file) {
@@ -16,6 +19,7 @@ std::string read_file_utf8(const std::filesystem::path& path) {
   return buffer.str();
 }
 
+// 函数: 按换行符切分文本
 std::vector<std::string_view> split_lines(std::string_view text) {
   std::vector<std::string_view> lines;
   std::size_t start = 0;
@@ -31,6 +35,7 @@ std::vector<std::string_view> split_lines(std::string_view text) {
   return lines;
 }
 
+// 函数: 去除行尾回车符
 void trim_trailing_cr(std::string& line) {
   if (!line.empty() && line.back() == '\r') {
     line.pop_back();
@@ -38,4 +43,3 @@ void trim_trailing_cr(std::string& line) {
 }
 
 }  // namespace pl0
-

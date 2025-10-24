@@ -1,3 +1,5 @@
+// 文件: main.cpp
+// 功能: 实现 CLI 前端命令分发
 #include <filesystem>
 #include <iostream>
 #include <optional>
@@ -21,6 +23,7 @@ using pl0::print_diagnostics;
 using pl0::run_instructions;
 using pl0::save_pcode_file;
 
+// 函数: 打印命令行用法
 void print_usage() {
   std::cout << "Usage:\n"
             << "  pl0 compile <input.pl0> [-o out.pcode] [--dump-tokens --dump-ast --dump-sym --dump-pcode --bounds-check]\n"
@@ -29,12 +32,14 @@ void print_usage() {
             << "  pl0 <input.pl0> [--trace-vm --bounds-check] [--dump-tokens --dump-ast --dump-sym --dump-pcode]\n";
 }
 
+// 函数: 根据输入推导默认输出文件
 std::filesystem::path default_output(const std::filesystem::path& input) {
   auto output = input;
   output.replace_extension(".pcode");
   return output;
 }
 
+// 函数: 处理 compile 子命令
 int handle_compile_command(std::span<const std::string> args) {
   if (args.empty()) {
     print_usage();
@@ -103,6 +108,7 @@ int handle_compile_command(std::span<const std::string> args) {
   return 0;
 }
 
+// 函数: 处理 run 子命令
 int handle_run_command(std::span<const std::string> args) {
   if (args.empty()) {
     print_usage();
@@ -149,6 +155,7 @@ int handle_run_command(std::span<const std::string> args) {
   return result.success ? 0 : 1;
 }
 
+// 函数: 处理 disasm 子命令
 int handle_disasm_command(std::span<const std::string> args) {
   if (args.size() != 1) {
     print_usage();
@@ -167,6 +174,7 @@ int handle_disasm_command(std::span<const std::string> args) {
   return 0;
 }
 
+// 函数: 处理直接输入源文件的便捷模式
 int handle_default_pipeline(std::span<const std::string> args) {
   if (args.empty()) {
     print_usage();
@@ -233,6 +241,7 @@ int handle_default_pipeline(std::span<const std::string> args) {
 
 }  // namespace
 
+// 函数: 程序入口, 根据参数选择管线
 int main(int argc, char** argv) {
   std::vector<std::string> args;
   args.reserve(static_cast<std::size_t>(argc));

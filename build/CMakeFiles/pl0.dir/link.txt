@@ -1,2 +1,0 @@
-/usr/bin/ar qc libpl0.a CMakeFiles/pl0.dir/src/Codegen.cpp.o CMakeFiles/pl0.dir/src/Driver.cpp.o CMakeFiles/pl0.dir/src/Diagnostics.cpp.o CMakeFiles/pl0.dir/src/Lexer.cpp.o CMakeFiles/pl0.dir/src/PCode.cpp.o CMakeFiles/pl0.dir/src/Parser.cpp.o CMakeFiles/pl0.dir/src/Symbol.cpp.o CMakeFiles/pl0.dir/src/SymbolTable.cpp.o CMakeFiles/pl0.dir/src/Token.cpp.o CMakeFiles/pl0.dir/src/Utility.cpp.o CMakeFiles/pl0.dir/src/VM.cpp.o
-/usr/bin/ranlib libpl0.a

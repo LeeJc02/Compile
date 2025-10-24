@@ -247,6 +247,7 @@ void dump_block(const Block& block, std::ostream& out, int level) {
   }
 }
 
+// 函数: 打印词法分析结果
 void dump_tokens(const std::vector<Token>& tokens, std::ostream& out) {
   for (const auto& token : tokens) {
     out << token.range.begin.line << ':' << token.range.begin.column << ' ';
@@ -264,6 +265,7 @@ void dump_tokens(const std::vector<Token>& tokens, std::ostream& out) {
   }
 }
 
+// 函数: 打印符号表内容
 void dump_symbols(const std::vector<Symbol>& symbols, std::ostream& out) {
   for (const auto& symbol : symbols) {
     out << "level " << symbol.level << " ";
@@ -289,6 +291,7 @@ void dump_symbols(const std::vector<Symbol>& symbols, std::ostream& out) {
   }
 }
 
+// 函数: 重新扫描源码并收集 Token
 std::vector<Token> collect_tokens(const std::string& source) {
   DiagnosticSink sink;
   Lexer lexer(source, sink);

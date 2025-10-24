@@ -1,3 +1,5 @@
+// 文件: Token.cpp
+// 功能: 实现 Token 枚举到字符串的映射
 #include "pl0/Token.hpp"
 
 #include <array>
@@ -5,6 +7,7 @@
 
 namespace pl0 {
 
+// 函数: 将 Token 类型转换为易读字符串
 std::string to_string(TokenKind kind) {
   switch (kind) {
     case TokenKind::EndOfFile:

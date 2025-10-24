@@ -1,2 +1,0 @@
-/usr/bin/ar qc libpl0_test_support.a CMakeFiles/pl0_test_support.dir/unit/TestSupport.cpp.o
-/usr/bin/ranlib libpl0_test_support.a

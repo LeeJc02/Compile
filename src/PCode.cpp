@@ -1,3 +1,5 @@
+// 文件: PCode.cpp
+// 功能: 实现 P-Code 指令序列的辅助函数
 #include "pl0/PCode.hpp"
 
 #include <cctype>
@@ -8,6 +10,7 @@
 
 namespace pl0 {
 
+// 函数: 将操作码转为文本
 std::string to_string(Op op) {
   switch (op) {
     case Op::LIT:
@@ -44,6 +47,7 @@ std::string to_string(Op op) {
   return "unknown";
 }
 
+// 函数: 将 OPR 子操作码转为文本
 std::string to_string(Opr opr) {
   switch (opr) {
     case Opr::RET:
@@ -90,6 +94,7 @@ std::string to_string(Opr opr) {
   return "unknown";
 }
 
+// 函数: 文字化单条指令
 std::string to_string(const Instruction& instr) {
   std::ostringstream oss;
   oss << to_string(instr.op) << " " << instr.level << " ";
@@ -101,6 +106,7 @@ std::string to_string(const Instruction& instr) {
   return oss.str();
 }
 
+// 函数: 从文本解析出指令
 Instruction parse_instruction(const std::string& text) {
   std::istringstream iss(text);
   std::string op_text;
@@ -158,6 +164,7 @@ Instruction parse_instruction(const std::string& text) {
   return instr;
 }
 
+// 函数: 将指令序列写入流
 void serialize_instructions(const InstructionSequence& instructions,
                             std::ostream& out) {
   for (std::size_t i = 0; i < instructions.size(); ++i) {
@@ -169,6 +176,7 @@ void serialize_instructions(const InstructionSequence& instructions,
   }
 }
 
+// 函数: 从流中读取指令序列
 InstructionSequence deserialize_instructions(std::istream& in) {
   InstructionSequence instructions;
   std::string line;
